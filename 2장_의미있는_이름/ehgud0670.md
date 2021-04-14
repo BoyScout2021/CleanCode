@@ -131,9 +131,72 @@ public static void copyChars(char source[] char destination[]) {
   * `NameString` (x) -> `Name` (o)
   * `Customer`, `CustomerObject` 둘의 차이를 알겠는가? 차이를 구분하도록 중복되지 않게 이름을 짓자
 
-## 발음하기 쉬운 이름을 사용하라 
+## 발음하기 쉬운 이름을 사용하라
+
+* `genymdhms`(generate date, year, month, day, hour, minute, second)
+
+=> 실제로 이러한 단어가 있고 직원들이 "젠 와이 엠 디 에이취 엠 에스"라고 발음했다고 한다. (밥 아저씨는 "젠 야 무다 함즈" 라고 발음했다고 한다.)
+
+* 두 예제를 보고 어느 코드가 발음하기 쉽고 또 파악하기 쉬운지 생각해보자
+
+```swift
+class DtaRcrd102 {
+    let genymdhms: Date
+    var modymdhms: Date?
+    let pszqint = "102"
+    
+    init(genymdhms: Date) {
+        self.genymdhms = genymdhms
+    }
+}
+```
+
+```swift
+class Customer {
+    let generationTimestamp: Date
+    var modificationTimestamp: Date?
+    let recordId = "102"
+    
+    init(genymdhms: Date) {
+        self.generationTimestamp = genymdhms
+    }
+}
+```
+
+=> 둘째 코드는 지적인 대화가 가능해진다. "마이키, 이 레코드 좀 보세요. `Generation Timestamp` 값이 내일 날짜입니다! 어떻게 이렇죠?"
+
+이 항목에서 가장 울림이 있었던 문단:
+<br>발음하기 어려운 이름은 토론하기도 어렵다. 바보처럼 들리기 십상이다. "흠, 여기 비 씨 알 3씨 엔 티에 피 에스 지 큐 int가 있군요. 보입니까?" 발음하기 쉬운 이름은 중요하다. **프로그래밍은 사회 활동이기 때문이다.** 
 
 ## 검색하기 쉬운 이름을 사용하라
+
+문자 하나를 사용하는 이름과 상수는 텍스트 코드에서 쉽게 눈이 띄지 않는다는 문제점이 있다. 이런 관점에서 긴 이름이 짧은 이름보다 좋다. 검색하기 쉬운 이름이 상수보다 좋다. 
+
+* `MAX_CLASSES_PER_STUDENT` 과 숫자 7을 비교해보라. 무엇이 더 검색하기 쉬운가?
+  * 숫자 7이 들어가는 파일 이름이나 수식이 모두 검색되서 찾기 힘들다.
+  * 검색은 되었지만 7을 사용한 의도가 다른 경우도 있다. 상수가 여러 자리 숫자이고 누군가 상수 내 숫자 위치를 바꿨다면 **문제는 더욱 심각해진다.** 상수에 버그가 있으나 검색으로 찾아내지 못한다(예를 들어 어떤 숫자의 숫자 자리수 각각이 의미가 있는 경우다. 789 에서 897로 바뀌어버리면 왜 비뀌었는지 부터 파악을 제대로 해야 한다).
+  * 검색하기 쉬운 이름이 상수(숫자)보다 좋다. 
+
+* `e` 라는 문자도 변수 이름으로 적합하지 못하다. `e`는 영어에서 가장 많이 쓰이는 문자로 검색하기 어려운 문자. 십중팔구 거의 모든 프로그램, 거의 모든 문장에 등장하기 때문이다. 
+
+* 아래 코드 중 두번째 코드가 훨씬 검색하기 쉽다. **위 코드에서 sum이 별로 유용하진 않으나 최소한 검색이 가능하다(이름 때문에 함수가 길어지는 것보다 검색하기 쉬운 이름을 갖는 것이 훨씬 유용하다).**
+
+```swift
+for j in 0..<34 {
+    s += (t[j]*4)/5;
+}
+```
+
+```swift
+let realDaysPerIdealDay = 4
+let workDaysPerWeek = 5
+var sum = 0
+for j in 0 ..< numberOfTasks {
+    let realTaskDays = taskEstimate[j] * realDaysPerIdealDay
+    let realTaskWeeks = (realTaskDays / workDaysPerWeek)
+    sum += realTaskWeeks
+}
+```
 
 ## 인코딩을 피하라 
 
