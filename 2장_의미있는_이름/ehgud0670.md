@@ -257,6 +257,20 @@ class Part {
 
 * 클래스 이름과 객체 이름은 명사나 명사구가 적합하다. Customer, WikiPage, Account, AddressParser 등이 좋은 예다. Manager, Processor, Data, Info 등과 같은 단어는 피하고, **동사는 사용하지 않는다.**
 
+## 메서드 이름
+
+> Swift 의 경우에만 한합니다.
+
+* init  
+
+```swift
+// bad
+let complex = Complex(23.0);
+// good
+let complex = Complex(fromRealNumber: 23.0);
+```
+init 할때는 인자 레이블을 생략하기보다는 직접적으로 명시하여 생성자에 어느 값을 넣어야 하는지, 어느 값이 넣어지는지 명확하게 보여주도록 한다. 
+
 ## 한 개념에 한 단어를 사용하라 
 
 * 추상적인 개념 하나에 단어 하나를 선택해 이를 고수하자.
