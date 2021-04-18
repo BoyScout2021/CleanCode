@@ -6,6 +6,10 @@
 
 ## 작게 만들어라!
 
+* 함수를 만드는 첫째 규칙은 '작게!'다. 함수를 만드는 둘째 규칙은 '더 작게!'다. **40여년간 오랜 시행착오를 바탕으로 나(밥 아저씨)는 작은 함수가 좋다고 확신한다.**
+* 함수가 얼마나 짧아야 하느냐고? 일반적으로 목록 3-2 보다 짧아야 한다! 목록 3-2는 목록 3-3으로 줄여야 마땅하다.
+
+> 목록 3-3 HtmlUtil.java(re-refactored)
 ```java
 public static String renderPageWithSetupsAndTeardowns(PageData pageData, boolean isSuite) throws Exception {
     if (isTestPage(pageData)) {
@@ -14,15 +18,43 @@ public static String renderPageWithSetupsAndTeardowns(PageData pageData, boolean
     return pageData.getHtml();
 }
 ```
+=> 목록 3-1 이 무려 59줄, 목록 3-2 가 10줄, 목록 3-3 이 불과 3줄이다(마법이다, 마법).
+
+### 블록과 들여쓰기 
+
+* if 문/else 문/while 문 등에 들어가는 블록은 한 줄이어야 한다는 의미다. 대개 거기서 함수를 호출한다. 
+* **그러면 바깥을 감싸는 함수(enclosing function)가 작아질뿐 만 아니라**
+* 블록 안에서 호출하는 함수 이름을 적절히 짓는다면, 코드를 이해하기도 쉬워진다. 
 
 ## 한 가지만 해라!
 
-## 함수 당 추상화 수준은 하나로!
+* **함수는 한 가지를 해야 한다. 그 한가지를 잘 해야 한다. 그 한 가지만을 해야 한다.**
+
+하지만 `renderPageWithSetupsAndTearDowns` 가 세가지를 한다고 주장할 수도 있다.
+
+1. 페이지가 테스트 페이지인지 판단한다. 
+2. 그렇다면 설정 페이지와 해제 페이지를 넣는다. 
+3. 페이지를 HTML로 렌더링한다.
+
+=> 위에서 언급하는 세 단계는 지정된 함수 아래에서 추상화 수준이 하나다. **지정된 함수 이름 아래에서 추상화 수준이 하나인 단계만 수행한다면 그 함수는 한가지 작업만 한다.**
+
+## 함수 당 추상화 수준은 하나로! (쉽지 않네!)
+
+* **함수가 확실히 '한 가지' 작업만 하려면 함수 내 모든 문장의 추상화 수준이 동일해야 한다.**
+* 한 함수 내에 추상화 수준을 섞으면 코드를 읽는 사람이 헷갈린다. 특정 표현이 근본 개념인지 아니면 세부사항인지 구분하기 어려운 탓이다. 
+* 하지만 문제는 이 정도로 그치지 않는다. 근본 개념과 세부사항을 뒤섞기 시작하면, **깨어진 창문처럼 사람들이 함수에 세부사항을 점점 더 추가한다(내가 그렇게 하고 있다, 베키송 ㅜㅜ).**
 
 ### 위에서 아래로 코드 읽기: 내려가기 규칙
 
+코드는 위에서 아래로 이야기처럼 읽혀야 좋다. 한 함수 다음에는 추상화 수준이 한 단계 낮은 함수가 온다. 즉 위에서 아래로 프로그램을 읽으면 함수 추상화 수준이 한 번에 한 단계씩 낮아진다. 이것을 **내려가기 규칙**이라 부른다. 
+
 ## Switch 문 
 
+* switch 문은 작게 만들기 어렵다. 
+* 또한 '한 가지' 작업만 하는 switch문도 만들기 어렵다. **본질적으로 switch 문은 N가지를 처리한다.** 불행하게도 switch문을 완전히 피할 방법은 없다. 
+* **하지만 각 switch 문을 저차원 클래스에 숨기고 절대로 반복하지 않는 방법은 있다.** 물론 **다형성(polymorphism)** 을 이용한다.
+
+> 목록 3-4 Payroll.java
 ```java
 public Money calculatePay(Employee e) throws InvalidEmployeeType {
     switch (e.type) {
@@ -37,19 +69,43 @@ public Money calculatePay(Employee e) throws InvalidEmployeeType {
     }
 }
 ```
+=> 위 함수는 첫째-함수가 길다, 둘째-'한가지' 작업만 수행하지 않는다. 셋째-SRP를 위반한다. 넷째-OCP를 위반하는 4가지 문제가 있다. 
+<br>=> 셋째-SRP를 위반하는 이유는 해당 함수가 다형성을 고려하지 않고 모든 직원 유형에 따라 임금 계산을 하고 있기 때문이다. 다형성을 이용해 하나의 클래스는 하나의 역할만 해야한다. `SalariedEmployee`, `HourlyEmployee` 등등으로 나눠서 `calculatePay` 를 구현해야 한다.
+<br>=> 넷째-OCP를 위반하는 이유는 Employee의 유형을 추가할 때 마다할 코드를 변경해야 하기 때문이다. 다형성을 이용해 수정에는 닫혀있고 확장에는 열려있도록 하자.
+<br>=> **가장 심각한 문제는 위 함수와 구조가 동일한 함수가 무한정 생기고 존재한다는 사실이다.** ex) `isPayday(Employee e, Date date)` 혹은 `deliverPay(Employee e, Money pay)`
+
+> 목록 3-5 Employee and Factory
 
 ```java
 public abstract class Employee {
     public abstract Money calculatePay();
 }
 
+_____________________________________________
+
 public interface EmployeeFactory {
     public Employee makeEmployee(EmployeeRecord e) throws InvalidEmployeeType;
 }
-```
 
+public class EmployeeFactoryImpl implements EmployeeFactory {
+    public Employee makeEmployee(EmployeeRecord r) throws InvalidEmployeeType {
+        return switch (r.type) {
+            case COMISSIONED -> new CommissionedEmployee(r);
+            case HOURLY -> new HourlyEmployee(r);
+            case SALARIED -> new SalariedEmployee(r);
+            default -> throw new InvalidEmployeeType(r.type);
+        };
+    }
+}
+```
+=> 3-5는 3-4를 해결한 코드다. 팩토리는 switch문을 사용해 적절한 Employee 파생 클래스의 인스턴스를 생성한다. 다형성을 이용해 실제 파생 클래스의 함수가 실행된다.
+=> switch 문은 **다형적 객체를 생성**하는 코드안에서 사용함으로써 **단 한번만 작성되도록** 숨겨준다.
 
 ## 서술적인 이름을 사용하라! 
+
+* 서술적인 이름을 붙여라. 좋은 이름이 주는 가치는 아무리 강조해도 지나치지 않다.
+* 이름이 길어도 괜찮다. 겁먹을 필요없다. **길고 서술적인 이름이 짧고 어려운 이름보다 좋다.**
+
 
 ## 함수 인수 
 최선은 입력 인수가 없는 경우이며, 차선은 입력 인수가 1개뿐인 경우다. 
@@ -119,6 +175,8 @@ void triad(String name, int conut, Integer... args);
 * 키워드를 추가하자. `assertEquals` 보단 `assertEquals(expected: expected, actual: actual)` 이 더 좋다. 이러면 인수 순서를 기억할 필요가 없어진다.
 
 ## 부수 효과를 일으키지 마라! 
+
+* 함수에서 한 가지를 하겠다고 약속하고 남몰래 다른 일을 하는 행위이다. 따라서 예측 불가능하다. 
 
 ```java
 public class UserValidator {
