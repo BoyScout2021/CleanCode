@@ -171,13 +171,23 @@ report.appendFooter()
 
 ## 명령과 조회를 분리하라!
 
+함수는 
+  1. 뭔가를 수행하거나 
+  2. 뭔가에 답하거나 
+  3. 둘 중 하나만 해야한다. 
+
+### 둘 다 하면 혼란을 초래한다. 예를 보자
+
 ```java
 public boolean set(String attribute, String value);
 ```
+=> 이 함수는 이름이 attribute인 속성을 찾아 값을 value로 설정한 후 성공하면 true를 반환하고 실패하면 false를 반환한다. value 설정하는 것을 수행하고 해당 수행에 대한 결과를 답한다. 둘 다 하는 함수다. 이 함수를 사용한 아래 코드를 보자.
+
 
 ```java
 if (set("username", "unclebob"))...
 ```
+=> if 문에 넣고 보면 형용사로 느껴진다. 그래서 if문은 "username 속성이 unclebob으로 설정되어 있다면....."으로 읽힌다. **"username을 unclebob으로 설정하는데 성공하면..." 으로 읽히지 않는다.** 해결책은 아래 코드와 같이 명령과 조회를 분리해 혼란을 애초에 뿌리 뽑는 방법이다. 
 
 ```java
 if (attributeExists("username") {
