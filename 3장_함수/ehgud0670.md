@@ -105,7 +105,7 @@ public class EmployeeFactoryImpl implements EmployeeFactory {
 
 * 서술적인 이름을 붙여라. 좋은 이름이 주는 가치는 아무리 강조해도 지나치지 않다.
 * 이름이 길어도 괜찮다. 겁먹을 필요없다. **길고 서술적인 이름이 짧고 어려운 이름보다 좋다.**
-
+* 이름이 붙일때는 일관성이 있어야 한다. ex) (`includeSetupAndTeardownPages`, `includeSetupPages`, `includeSuiteSetupPage`, `includeSetPage`)
 
 ## 함수 인수 
 최선은 입력 인수가 없는 경우이며, 차선은 입력 인수가 1개뿐인 경우다. 
@@ -255,9 +255,15 @@ if (attributeExists("username") {
 
 ## 오류코드보다 예외를 사용하라!
 
+명령 함수에서 오류 코드를 반환하는 방식도 명령/조회 분리 규칙을 위반한다. 동사/형용사 혼란을 일으키지 않지만 오류 코드를 반환하는 방식의 문제는 **여러 단계로 중첩되는 코드를 야기한다는 점**이다. 
+* 또 오류 코드를 반환하면 호출자는 **오류 코드를 곧바로 처리해야 한다는 문제**가 있다(코드가 더러워진다).
+
 ```java
 if (deletePage(page) == E_OK)
 ```
+=> 오류 코드를 반환하는 방식은 여러 단계로 중첩되는 코드를 야기한다. 
+
+* 대신 Exception을 사용하고, try/catch 문을 사용하자. 여러 단계로 중첩되는 코드를 한방에 해결한다. 처리를 한 방에 모아준다. 오류 코드 대신 예외를 사용하면 **오류 처리 코드가 원래 코드에서 분리되므로 코드가 깔끔해진다.** 
 
 ```java
 try { 
@@ -270,6 +276,8 @@ try {
 ```
 
 ### Try/Catch 블록 뽑아내기
+
+* try/catch 블록은 원래 추하다. 따라서 아래처럼 try/catch 블록을 별도 함수로 뽑아내자. `deletePageAndAllReferences(Page page)`, `logError(Exception e)` 
 
 ```java
 public void delete(Page page) {
@@ -293,6 +301,8 @@ private void logError(Exception e) {
 
 ### 오류 처리도 한가지 작업이다. 
 
+함수는 `한 가지` 작업만 해야 한다. 오류 처리도 `한 가지` 작업에 속하므로 오류를 처리하는 함수는 오류만 처리해야 한다. 함수에 try가 있다면 catch/finally로 함수를 끝내야 한다. 그 아래에 코드를 작성하면 안된다!
+
 ### Error.java 의존성 자석
 
 ```java
@@ -305,6 +315,7 @@ public enum Error {
     WAITING_FOR_EVENT;
 }
 ```
+=> 위와 같은 클래스는 의존성 자석이다. Error enum이 변한다면 Error enum을 사용하는 클래스 전부를 다시 컴파일하고 다시 배치해야 한다. 그래서 Error 클래스 변경이 어려워진다. 따라서 오류 코드 대신 예외를 사용하자. **새 예외는 Exception에서 파생된다. 따라서 재컴파일/재배치 없이도 새 예외 클래스를 추가할 수 있다.**
 
 ## 반복하지 마라! 
 
