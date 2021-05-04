@@ -47,7 +47,7 @@ Pattern timeMatcher = Pattern.compile(
 )
 ```
 
-=> 위에 제시한 주석은 코드에서 사용한 **정규표현식이 시간과 날짜를 듯한다고 설명**한다.
+=> 위에 제시한 주석은 코드에서 사용한 **정규표현식이 시간과 날짜를 뜻한다고 설명**한다.
 물론 시각과 날짜를 변환하는 클래스를 만들어 코드를 옮겨주면 더 좋고 더 깔끔하겠다. 그러면 주석이 필요 없어진다.
 
 ### 의도를 설명하는 주석
@@ -129,7 +129,6 @@ return buildList(text.substring(match.end()));
 ### 같은 이야기를 중복하는 주석 && 오해할 여지가 있는 주석
 
 코드 내용을 그대로 중복한 주석은 때문에 자칫하면 코드보다 주석을 읽는 시간이 더 오래 걸린다. 
-
 ```java
 // this.closed 가 true일 때 반환되는 유틸리티 메서드다. 
 // 타임아웃에 도달하면 예외를 던진다. 
@@ -143,8 +142,7 @@ public synchronized void waitForClose(final long timeoutMillis) throws Exception
 }
 ```
 => 주석이 코드보다 읽기도 쉽지도 않다. 실제로 코드보다 부정확해 **독자가 함수를 대충 이해하고 넘어가게 만든다.** 
-
-또 위의 코드는 오해할 여지가 있는 주석이다. `this.closed` 가 true 로 변하는 순간에 메서드는 반환되지 않는다. `this.closed` 가 **true 여야** 메서드는 반환된다. 아니면 무조건 타임아웃을 기다렸다 **그래도 `this.closed`가 true가 아니면** 예외를 던진다.
+<br>=> 또 위의 코드는 오해할 여지가 있는 주석이다. `this.closed` 가 true 로 변하는 순간에 메서드는 반환되지 않는다. `this.closed` 가 **true 여야** 메서드는 반환된다. 또 타임아웃을 기다리면 무작정 예외를 던지는 것도 아니다. 타임아웃이 지나고, **그래도 `this.closed`가 true가 아니면** 예외를 던진다. 이처럼, 해당 주석들은 내용이 정확하지 않아 코드를 오해할 여지가 있다.
 
 ### 의무적으로 다는 주석
 
@@ -180,7 +178,8 @@ if (employee.isEligibleForFullBenefits())
 ```java
 // Actions ////////////////////////////////////////
 ```
-=> 너무 자주 사용하지 않는다면 배너는 눈에 띄며 주의를 환기한다. 그러므로 반드시 필요할 때만, 아주 드물게 사용하는 편이 좋다. 배너를 남용하면 독자가 흔한 잡음으로 여겨 무시한다.
+=> 너무 자주 사용하지 않는다면 배너는 눈에 띄며 주의를 환기해주는 유용한 주석이다. 그러므로 반드시 필요할 때만, 아주 드물게 사용하는 편이 좋다. 
+<br>=> **하지만 배너를 남용하면 독자가 흔한 잡음으로 여겨 무시한다.**
 
 ### 닫는 괄호에 다는 주석
 
@@ -216,9 +215,9 @@ this.pngBytes = new byte[(this.width + 1) * (this.height * 3) + 200];
 * 한 픽셀이 한 바이트인가? 
 * 200을 추가하는 이유는?
 
-=> 주석을 다는 목적은 코드만으로 설명이 부족해서다. 코드로 다 설명이 되도록 리팩토링하자.
+=> 주석을 다는 목적은 (낮은 품질의)코드만으로 설명이 부족해서다. 코드로 다 설명이 되도록 리팩토링하자.
 
 ### 예제
 
 리팩터링 버전 코드에서 `determineIterationLimit()` 메소드가 잘못되었습니다.
-`double iterationLimit = Math.sqrt(crossedOut.length);` 가 아닌 `double iterationLimit = Math.sqrt(crossedOut.length) + 1;`이 되어야 합니다. 
+`double iterationLimit = Math.sqrt(crossedOut.length);` 가 아닌 `double iterationLimit = Math.sqrt(crossedOut.length) + 1.0;`이 되어야 합니다. 
