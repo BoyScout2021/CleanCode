@@ -4,19 +4,271 @@
 
 ## 오류 코드보다 예외를 사용하라
 
+> 오류 코드 사용하기 
+
+예외를 지원하지 언어는 오류를 처리하고 보고하는 방법이 제한적이었다. 오류 플래그를 설정하거나 호출자에게 오류 코드를 반환하는 방법이 전부였다. 
+
+* 이 방법의 단점: 
+  * 호출자 코드 복잡해진다. 함수를 호출한 즉시 오류를 확인해야 하기 때문이다. 불행히도 **이 단계는 잊어버리기 쉽다.**
+
+* 이 방법의 장점: 오류를 지원하지 언어에서는 오류 코드만이 수단이라서 사용하는게 장점이라면 장점이지만 오류를 지원하는 언어라면 절대 사용하면 안된다. 
+
+오류가 발생하면 예외를 던지는 편이 낫다. 그러면 호출자 코드가 **더 깔끔**해진다. **논리가 오류 처리 코드와 뒤섞이지 않으니까.**
+
+> 예외 사용하기 
+
+```java
+public void sendShutDown() {
+    try {
+        tryToShutDown();
+    } catch (DeviceShutDownError e) {
+        logger.log(e);        
+    }
+}
+```
+* 코드가 확실히 깔끔해졌다.
+* 코드 품질도 더 나아졌다. 앞서 뒤섞였던 개념, **즉 디바이스를 종료하는 알고리즘과 오류를 처리하는 알고리즘을 분리했기 때문이다.** 이제는 각 개념을 독립적으로 살펴보고 이해할 수 있다. 
+
 ## Try-Catch-Finally 문부터 작성하라
+
+try 블록에서 무슨 일이 생기든지 **catch 블록은 프로그램 상태를 일관성 있게 유지해야 한다.** 그러므로 예외가 발생할 코드를 짤 때는 **try-catch-finally 문으로 시작하는 편**이 낫다. 그래야 try 블록에서 무슨 일이 생기든지 호출자가 기대하는 **상태를 정의하기 쉬워진다.** 따라서 해당 부분은 TDD로 개발하면 깔끔할 것이다! 다음은 TDD로 작성하는 코드이다. 
+
+> 파일이 없으면 예외를 던지는지 알아보는 테스트
+```java
+@Test(expected == StorageException.class)
+public void retrieveSectionShouldThrowOnInvalidFileName() {
+    sectionStore.retrieveSection("invalid - file");
+}
+```
+
+단위 테스트에 맞춰 아래 코드를 구현한다. 
+> 실패하는 메소드 
+```java
+public List<RecordedGrip> retrieveSection(String sectionName) {
+    // 실제로 구현할 때까지 비어 있는 더미를 반환한다. 
+    return new ArrayList<RecordedGrip>();
+}
+```
+=> 코드가 예외를 던지지 않으므로 단위 테스트는 실패한다. 잘못된 파일 접근을 시도하게 구현을 변경하자. 아래 코드는 예외를 던진다.  
+
+> 예외를 던지는 최소한의 성공 테스트
+```java
+public List<RecordedGrip> retrieveSection(String sectionName) {
+    try {
+        FileInputStream stream = new FileInputStream(sectionName);
+    } catch (Exception e) {
+        throw new StorageException("retrieval error", e);
+    }
+    return new ArrayList<RecordedGrip>();
+}
+```
+=> 코드가 예외를 던지므로 이제는 테스트가 성공한다. **이 시점에서 리팩터링이 가능하다.** catch 블록에서 예외 유형을 좁혀 실제로 FileInputStream 생성자가 던지는 FileNotFoundException을 잡아낸다. 
+
+```java
+public List<RecordedGrip> retrieveSection(String sectionName) {
+    try {
+        FileInputStream stream = new FileInputStream(sectionName);
+    } catch (FileNotFoundException e) {
+        throw new StorageException("retrieval error", e);
+    }
+    return new ArrayList<RecordedGrip>();
+}
+```
+
+이처럼 강제로 예외를 일으키는 **테스트 케이스**를 먼저 작성한 후 테스트를 통과하게 코드를 작성하는 방법(TDD)를 권장한다.
+그러면 자연스럽게 **try 블록의 트랜잭션 범위부터 구현하게 되므로 범위 내에서 트랜잭션 본질을 유지하기 쉬워진다.**
 
 ## 미확인(unchecked) 예외를 사용하라 
 
-## 예외에 의미를 제공하라 
+(찬반이 있겠지만)확인된 예외는 사용하지 않는다. 확인된 예외는 OCP를 위반하기 때문이다. 
+메서드에서 확인된 예외를 던졌는데 catch 블록이 세 단계 위에 있다면 그 사이 메서드 모두가 선언부에 해당 예외를 정의해야 한다. 즉, 하위 단계에서 코드를 변경하면 **상위 단계 메서드 선언부를 전부 고쳐야 한다는 말**이다. 이는 OCP를 위반하고 따라서 캡슐화가 깨진다. 오류를 원거리에서 처리하기 위해 예외를 사용한다는 사실을 감안한다면 이처럼 확인된 예외가 캡슐화를 깨버리는 현상은 참으로 유감스럽다. 
+
+=> 이와 같은 이유로 이 책에서는 확인된 예외가 아닌 미확인 예외를 사용하라고 주장한다.
+
+### Swift는 어떠한가
+
+Swift 는 자바의 미확인 예외는 존재하지 않고, 확인된 예외(`enum Error`)만 존재한다. 근데 Swift의 Error는 자바처럼 OCP를 위반하는가? 아니다. 예외를 던져한다면 Swift의 메소드 선언부에는 **오직 throws 만 추가하면 되고 어떤 Error인지는 명시하지 않아도 되기 때문이다.** 따라서 Swift 의 확인된 예외는 OCP를 사용하지 않으므로 사용해도 된다(미확인 예외가 없으므로 사용할 게 이것밖에 없다). Swift 문서에도 `enum Error`를 사용하는 걸 권장한다.
+
+## 예외에 의미를 제공하라
+
+예외를 던질 때는 전후 상황을 충분히 덧붙인다. 그러면 오류가 발생한 원인과 위치를 찾기가 쉬워진다. 오류 메시지에 정보를 담아 예외와 함께 던진다. 실패한 연산 이름과 실패 유형도 언급한다. 
 
 ## 호출자를 고려해 예외 클래스를 정의하라
 
+애플리케이션에서 오류를 정의할 때 프로그래머에게 가장 중요한 관심사는 **오류를 잡아내는 방법**이 되어야 한다.
+
+> 오류를 형편없이 분류한 사례 
+
+```java
+ACMEPort port = new ACMEPort(12);
+
+try {
+    port.open();
+} catch (DeviceReponseException e) { 
+    reportPortError(e);
+    logger.log("Device response exception", e);
+} catch (ATM1212UnlockedException e) {  
+    reportPortError(e);
+    logger.log("Unlock exception", e);
+} catch (GMXError e) { 
+    reportPortError(e);
+    logger.log("Device reponse exception", e);
+} finally {
+    //...
+}
+```
+
+> 호출하는 라이브러리 API를 감싸면서 위 코드를 간결하게 작성한 코드
+
+```java
+LocalPort port = new LocalPort(12);
+
+try {
+    port.open();
+} catch (PortDeviceFailure e) { 
+    reportPortError(e);
+    logger.log(e.getMessage(), e);
+} finally {
+    //...
+}
+```
+
+```java
+public class LocalPort {
+    private ACMEPort innerPort;
+
+    public LocalPort(int portNumber) {
+        innerPort = new ACMEPort(portNumber);
+    }
+
+    public void open() {
+        try {
+            innerPort.open();
+        } catch (DeviceReponseException e) {
+            throw new PortDeviceFailure(e);
+        } catch (ATM1212UnlockedException e) {
+            throw new PortDeviceFailure(e);
+        } catch (GMXError e) {
+            throw new PortDeviceFailure(e);
+        }
+    }
+    //...
+}
+```
+
 ## 정상 흐름을 정의하라
+
+특수 사례 패턴(SPECIAL CASE PATTERN)으로 정상 흐름을 정의하자. 
+특수 사례 패턴이란 클래스를 만들거나 객체를 조작해 특수 사례를 처리하는 방식이다.
+이 방식으로 클래스나 객체가 **예외적인 상황을 캡슐화해서 처리**한다. 
+그러면 **클라이언트 코드가 예외적인 상황을 처리할 필요가 없어진다.**
+
+> 기존 코드: 예외가 논리를 따라가게 어렵게 만든다. 
+```java
+try {
+    MealExpenses expenses = expenseReportDAO.getMeals(employee.getID());
+    m_total += expenses.getTotal();
+} catch(MealExpensesNotFound e) {
+    m_total += getMealPerDiem();
+}
+```
+
+> 특수 사례 패턴 적용 코드: 예외가 캡슐화되어 클라이언트 코드는 논리가 깔끔해진다. 
+```java  
+MealExpenses expenses = expenseReportDAO.getMeals(employee.getID());
+m_total += expenses.getTotal();
+```
+
+```java
+public class PerDiemMealExpenses implements MealExpenses {
+    public int getTotal() {
+        // 기본값으로 일일 기본 식비를 반환한다. 
+    }
+}
+```
 
 ## null을 반환하지 마라 
 
+```java
+public void registerItem(Item item) {
+    if (item != null) {
+        ItemRegistry registry = persistentStore.getItemRegistry();
+        if (registry != null) {
+            Item existing = registry.getItem(item.getID());
+            if (existing.getBillingPeriod().hasRetailOwner()) {
+                existing.register(item);
+            }
+        }
+    }
+}
+```
+
+```java
+List<Employee> employees = getEmployees();
+if (employees != null) {
+    for(Employee e : employees) {
+        totalPay += e.getPay();
+    }
+}
+```
+```java
+List<Employee> employees = getEmployees();
+for(Employee e : employees) {
+    totalPay += e.getPay();
+}
+```
+
+```java
+public List<Employee> getEmployees() {
+    if ( /* 직원이 없다면 */ ) {
+        return Collections.emptyList();
+    }
+}
+```
+
+### Swift는 어떠한가
+
 ## null을 전달하지 마라 
+
+```java
+public class MetircsCalculator {
+    public double xProjection(Point p1, Point p2) {
+        return (p2.x - p1.x) * 1.5;       
+    }
+    //...
+}
+```
+
+```java
+calculator.xProjection(null, new Point(12, 13));
+```
+
+```java
+public class MetircsCalculator {
+    public double xProjection(Point p1, Point p2) {
+        if (p1 == null || p2 == null) {
+            throw InvalidArgumentException(
+                "Invalid argument for MetricsCalculator.xProjection");
+        }
+        return (p2.x - p1.x) * 1.5;       
+    }
+}
+```
+
+```java
+public class MetircsCalculator {
+    public double xProjection(Point p1, Point p2) {
+        assert p1 != null : "p1 should not be null";
+        assert p2 != null : "p2 should not be null";
+        return (p2.x - p1.x) * 1.5;       
+    }
+}
+```
+
+### Swift는 어떠한가
 
 ## 결론 
 
+* 깨끗한 코드는 일기도 좋아야 하지만 안정성도 높아야 한다. 이 둘은 **상충하는 목표가 아니다.** 
+  * 오류 처리를 프로그램 논리와 분리해 독자적인 사안으로 고려하면 튼튼하고 깨끗한 코드를 작성할 수 있다.
+  * 오류 처리를  프로그램 논리와 분리하면 **독립적인 추론이 가능해지며 유지보수정도 크게 높아진다.**
