@@ -218,6 +218,8 @@ public class PerDiemMealExpenses implements MealExpenses {
 
 ## null을 반환하지 마라 
 
+> null을 반환하는 나쁜 코드
+
 ```java
 public void registerItem(Item item) {
     if (item != null) {
@@ -231,6 +233,11 @@ public void registerItem(Item item) {
     }
 }
 ```
+=> 위 코드는 나쁜 코드다! null을 반환하는 코드는 일거리를 늘릴뿐만 아니라 호출자에게 문제를 떠넘긴다. 누구 하나라도 null 확인을 빼먹는다면 애플리케이션이 통제 불능에 빠질지도 모른다. 
+
+* 실제로 위 코드에는 persistentStore를 null인지 검사하지 않는데, 해당 객체가 null이라면 NullPointerException이 발생한다.
+
+> null을 반환하는 나쁜 코드 2
 
 ```java
 List<Employee> employees = getEmployees();
@@ -240,6 +247,8 @@ if (employees != null) {
     }
 }
 ```
+
+> 위 코드를 수정한 버전: null이 아닌 빈 객체를 반환한다. 
 ```java
 List<Employee> employees = getEmployees();
 for(Employee e : employees) {
@@ -255,10 +264,19 @@ public List<Employee> getEmployees() {
 }
 ```
 
+=> 이처럼 코드를 변경하면 코드도 깔끔해질뿐더러 NullPointerException이 발생할 가능성도 줄어든다. 
+
 ### Swift는 어떠한가
+
+* nil을 반환해도 되지 않는 코드라면 당연히 nil을 반환하지 말자. nil을 반환하면 클라이언트 단에서 옵셔널을 통한 nil 검사를 해야 되고, 클라이언트 단에서 forced unwrapping을 했다면 앱 크래쉬가 발생하기 때문이다.
+* 반환하는 값이 컬렉션 타입이라면 위의 자바코드처럼 빈 컬렉션을 반환하는 것도 좋은 방법이다. 
+* 반환하는 값이 컬렉션 타입이 아니고 nil이 고려될 수 밖에 없다면 nil을 반환하자. Swift는 nil을 반환해도 된다. **왜냐하면 클라이언트 단에서 옵셔널을 통한 nil 체크를 하면 되기 때문이다.** 하지만 클라이언트 단에서 forced **unwrapping은 하지말도록 무조건 조심**하자!
 
 ## null을 전달하지 마라 
 
+* null을 전달하면 메소드 내에서 NullPointerException이 발생할 가능성이 있기 때문이다. 
+
+> null을 전달하는 코드 
 ```java
 public class MetircsCalculator {
     public double xProjection(Point p1, Point p2) {
@@ -271,6 +289,9 @@ public class MetircsCalculator {
 ```java
 calculator.xProjection(null, new Point(12, 13));
 ```
+=> 이렇게 null을 던지면 NullPointerException이 발생한다. 
+
+> 개선안 1: 메소드 내에서 null 검사해서 예외 던지기
 
 ```java
 public class MetircsCalculator {
@@ -284,6 +305,8 @@ public class MetircsCalculator {
 }
 ```
 
+> 개선안 2: 메소드 내에서 assert 문 이용하기 
+
 ```java
 public class MetircsCalculator {
     public double xProjection(Point p1, Point p2) {
@@ -295,6 +318,35 @@ public class MetircsCalculator {
 ```
 
 ### Swift는 어떠한가
+
+* nil을 전달하는 경우 guard을 이용해 nil 처리하자.
+
+```swift
+public class MetircsCalculator {
+    public func xProjection(p1: Point?, p2: Point?) -> Double? {
+        guard let p1 = p1, let p2 = p2 else { return nil }
+        return (p2.x - p1.x) * 1.5
+    }
+}
+```
+
+* 자바처럼 assert를 사용한 방법도 있겠다.
+
+```swift
+public func xProjection(p1: Point?, p2: Point?) -> Double? {
+    assert(p1 != nil, "p1 should not be null")
+    assert(p2 != nil, "p1 should not be null")
+    return (p2!.x - p1!.x) * 1.5
+}
+```
+
+* 하지만 애초에 인수에 옵셔널을 추가하지 않는게 Best다(그럴 수 있는 인수라면!!). 
+
+```swift
+public func xProjection(p1: Point, p2: Point) -> Double {
+    return (p2.x - p1.x) * 1.5
+}
+```
 
 ## 결론 
 
