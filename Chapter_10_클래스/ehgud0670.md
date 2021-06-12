@@ -2,12 +2,28 @@
 
 # 개요
 
-# 클래스 체계 
+코드의 표현력과 그 코드로 이루어진 함수에 아무리 신경 쓸지라도 **좀 더 차원 높은 단계**까지
+신경쓰지 않으면 깨끗한 코드를 얻기는 어렵다. 이 장에서는 좀 더 차원 높은 단계인 **깨끗한 클래스**를 다룬다. 
+
+# 클래스 체계
+
+클래스를 정의하는 표준 자바 관례에 따르면, 가장 먼저 변수 목록이 나온다. 
+ * *정적(`static`) 공개(`public`) 함수*가 있다면 맨 처음에 나온다.
+ * 다음으로 *정적 비공개(`private`) 변수*가 나오며, 
+ * 이어서 *비공개 인스턴스 변수*가 나온다. *공개 변수*가 필요한 경우는 없다.
+ * 변수 목록 다음에는 *공개 함수*가 나온다.
+
+*비공개 함수*는 자신을 호출하는 공개 함수 직후에 넣는다. 비공개 함수는 자신을 호출하는 공개 함수 직후에 넣는다. **즉, 추상화 단계가 순차적으로 내려간다. 그래서 프로그램은 신문 기사처럼 읽힌다.**
 
 ## 캡술화
 
+때로는 테스트 코드를 작성하기 위해 변수나 유틸리티 함수를 `protected` 로 선언해
+테스트 코드에 접근을 허용하기도 한다. 접근을 허용할만큼 테스트 코드는 매우 중요하다.
+**하지만 그전에 비공개 상태를 유지할 온갖 방법을 강구한다. 캡슐화를 풀어주는 결정은 언제나 최후의 수단이다.**
+
 # 클래스는 작아야 한다!
 
+> 목록 10-2 
 ```java
 public class SuperDashBoard {
     public Component getLastFocusedComponent()
@@ -17,6 +33,19 @@ public class SuperDashBoard {
     public int getBuildNumber() 
 }
 ```
+`SuperDashBoard` 는 메서드 수가 작음에도 **책임**이 너무 많다.
+
+* 클래스 이름은 해당 클래스 **책임을 기술**해야 한다. 간결한 이름이 떠오르지 않으면 필경 클래스 이름이 너무 커서 그렇다. 예를 들어, 클래스 이름에 `Processor`, `Manager`, `Super` 등과 같이 모호한 단어가 있다면 클래스에다 여러 책임을 떠안겼다는 증거다.
+* 클래스 설명은 만일("if"), 그리고("and"), -(하)며("or"), 하지만("but")을 사용하지 않고서 25단어 내외로 가능해야 한다.
+* 위의 `SuperDashBoard` 클래스를 설명하자면 "SuperDashBoard는 마지막으로 포커스를 얻었던 컴포넌트에 접근하는 방법을 제공하며, 버전과 빌드 번호를 추적하는 메커니즘을 제공하는 클래스" 이다. "~하며"라 적힌 설명에서 보이듯이, `SuperDashBoard`가 너무 많은(2개 이상) 책임을 가지고 있다는 증거다.
+
+## 단일 책임 원칙(SRP)
+
+단일 책임 원칙(`Single Responsibility Principle`)는 클래스나 모듈을 **변경할 이유가 하나, 단 하나뿐이어야 한다는 원칙**이다. 
+
+`SuperDashBoard`는 변경할 이유가 두 가지다. 
+  * 첫째, `SuperDashBoard` 는 소프트웨어 버전 정보를 추적한다. 그런데 버전 정보는 소프트웨어를 출시할 때마다 달라진다.
+  * 둘째, `SuperDashBoard` 는 자바 스윙 컴포넌트를 관리한다(SuperDashBoard는 최상위 GUI 윈도의 스윙 표현인 JFrame에서 파생한 클래스). 즉, 스윙 코드를 변경할 때마다 버전 번호가 달라진다. 하지만 역은 참이 아니다. 다른 코드가 바뀌어도 버전 번호는 달라진다. 즉 스윙 코드가 아닌 다른 코드가 바뀌어도 `SuperDashBoard`는 변경되어야 하므로 변경의 이유가 2가지가 된다.
 
 ```java
 public class Version {
@@ -25,22 +54,57 @@ public class Version {
     public int getBuildNumber()
 }
 ```
+책임, 즉 변경할 이유를 파악하려 애쓰다 보면 코드를 추상화하기도 쉬워진다. 
+버전 정보를 다루는 메소드 세 개를 따로 빼내 `Version` 이라는 독자적인 클래스를 만든다. 또 **Version 클래스는 다른 어플리케이션에서 재사용하기 쉬운 구조**다.
 
-## 단일 책임 원칙(SRP)
+### 인상적인 한마디: 작은 클래스가 많아도 복잡성은 비슷하니 걱정말고 쪼개자. 훨씬 바람직하다.
+
+* 작은 클래스가 많은 시스템이든 큰 클래스가 몇 개뿐인 시스템이든 돌아가는 부품은 그 수가 비슷하다. **어느 시스템이든 익힐 내용은 그 양이 비슷하다.** 그러므로 고민할 질문은 다음과 같다. `도구 상자를 어떻게 관리하고 싶은가? 작은 서랍을 많이 두고 기능과 이름이 명확한 컴포넌트를 나눠 넣고 싶은가?`
+  * 규모가 어느 수준에 이르는 시스템은 논리가 많고도 복잡하다. **이런 복잡성을 다루려면 체계적인 정리가 필수다.**
+  * 작은 클래스는 각자 맡은 책임이 하나며, 변경할 이유가 하나며, 다른 작은 클래스와 협력해 시스템에 필요한 동작을 수행한다.
 
 ## 응집도(Cohesion)
 
-```java
+우리는 응집도가 높은 클래스를 선호한다. **응집도가 높다는 말은 클래스에 속한 메서드와 변수가 서로 의존하며 논리적인 단위로 묶인다는 의미이기 때문이다.** 
 
+> 목록 10-4 Stack.java 응집도가 높은 클래스 
+```java
+public class Stack {
+    private int topOfStack = 0;
+    List<Integer> elements = new LinkedList<>();
+    
+    public int size() {
+        return topOfStack;
+    }
+    
+    public void push(int element) {
+        topOfStack++;
+        elements.add(element);
+    }
+    
+    public int pop() throws PoppedWhenEmpty {
+        if (topOfStack == 0) {
+            throw new PoppedWhenEmpty();
+        }
+        int element = elements.get(--topOfStack);
+        elements.remove(topOfStack);
+        return element;
+    }
+}
 ```
+위의 `Stack` 클래스는 응집도가 아주 높다. size()를 제외한 다른 두 메서드는 두 변수를 모두 사용한다. 
+
+* `함수를 작게, 매개변수 목록을 짧게`라는 전략을 따르다 보면 때때로 몇몇 메서드만이 사용하는 인스턴스 변수가 아주 많아진다. 이는 십중팔구 **새로운 클래스로 쪼개야 한다는 신호**다. 응집도가 높아지도록 변수와 메서드를 적절히 분리해 새로운 클래스 두 세게로 쪼개준다.
 
 ## 응집도를 유지하면 작은 클래스 여럿이 나온다
+
+클래스가 응집력을 잃는다면 쪼개라!
 
 > 목록 10-5 PrintPrimes.java
 ```java
 public class PrintPrimes {
     public static void main(String[] args) {
-        final int M = 1000;
+        final int M = 1000; // 구할 소수의 개수 
         final int RR = 50;
         final int CC = 4;
         final int WW = 10;
@@ -50,13 +114,13 @@ public class PrintPrimes {
         int PAGEOFFSET;
         int ROWOFFSET;
         int C;
-        int J;
-        int K;
+        int J; // 현재의 값. 
+        int K; // 현재의 index 
         boolean JPRIME;
         int ORD;
         int SQUARE;
         int N;
-        int MULT[] = new int[ORDMAX + 1];
+        int MULT[] = new int[ORDMAX + 1]; // 소인수들의 배수. ex) 3 * 3, 3 * 5, 5 * 7 ...
 
         J = 1;
         K = 1;
@@ -67,6 +131,7 @@ public class PrintPrimes {
         while (K < M) {
             do {
                 J = J + 2;
+                // 1. 해당 값이 SQUARE과 같을 때, Mult 배열의 새로운 index에 새로운 값을 추가한다. 
                 if (J == SQUARE) {
                     ORD = ORD + 1;
                     SQUARE = P[ORD] * P[ORD];
@@ -75,9 +140,11 @@ public class PrintPrimes {
                 N = 2;
                 JPRIME = true;
                 while (N < ORD && JPRIME) {
+                    // 2. 해당 값이 Mult 배열의 n index의 값보다 클때, Mult 배열의 기존 index에 새로운 값을 업데이트한다. 
                     while (MULT[N] < J) {
                         MULT[N] = MULT[N] + P[N] + P[N];
                     }
+                    // 3. 해당 값이 Mult 배열의 n index의 값과 같을 때, 비로소 소수가 아님을 판정한다. 
                     if (MULT[N] == J) {
                         JPRIME = false;
                     }
@@ -86,6 +153,7 @@ public class PrintPrimes {
             } while (!JPRIME);
 
             K = K + 1;
+            // 4. 3번의 경우가 아닌 모든 해당 값들은 소수가 판단하여 primes 배열에 추가한다. 
             P[K] = J;
         }
         {
@@ -111,6 +179,9 @@ public class PrintPrimes {
     }
 }
 ```
+=> 함수가 하나뿐인 위 프로그램은 엉망진창이다. 들여쓰기가 심하고, 이상한 변수가 많고, 구조가 빡빡하게 결합되었다. **최소한 여러 함수로 나눠야 마땅하다.** 
+
+* 목록 10-6에서 목록 10-8까지는 목록 10-5를 작은 함수와 클래스로 나눈 후 함수와 클래스와 변수에 **좀 더 의미있는 이름**을 부여한 결과다.
 
 > 목록 10-6 PrimePrinter.java 
 ```java
@@ -126,7 +197,7 @@ public class PrimePrinter {
                 COLUMNS_PER_PAGE,
                 "The First" + NUMBER_OF_PRIMES + " Prime Numbers"
         );
-       tablePrinter.print(primes);
+        tablePrinter.print(primes);
     }
 }
 ```
@@ -260,7 +331,26 @@ public class PrimeGenerator {
 }
 ```
 
+길이가 늘어난 이유는 여러 가지다.
+
+* 첫째, 리팩터링한 프로그램은 좀 더 길고 서술적인 변수 이름을 사용한다. 
+* 둘째, 리팩터링한 프로그램은 코드에 주석을 추가하는 수단으로 함수 선언과 클래스 선언을 활용한다. 
+* 셋째, 가독성을 높이고자 공백을 추가하고 형식을 맞추었다. 
+
+### 원래의 프로그램이 세가지 책임으로 나눠졌다
+
+* PrimePrinter: main 함수 하나만 포함하며 실행 환경을 책임진다. 호출 방식이 달라지면 클래스도 바뀐다. 예를 들어, 프로그램을 [SOAP 서비스](https://ko.wikipedia.org/wiki/SOAP)로 바꾸려면 PrimePrinter를 고쳐준다.
+* RowColumnPagePrinter: 숫자 목록을 주어진 행과 열에 맞춰 페이지에 출력하는 클래스다. 출력하는 모양새를 바꾸려면 RowColumnPagePrinter 클래스를 고쳐준다. 
+* PrimeGenerator: 소수 목록을 생성하는 방법을 안다. 소수를 계산하는 알고리즘이 바뀐다면 PrimeGenerator 클래스를 고쳐준다.   
+
+### 인상적인 한마디: 테스트를 통해 구조를 바꾼다.  
+
+* 가장 먼저, 원래 프로그램의 정확한 동작을 검증하는 테스트 슈트를 작성했다.
+* 그런 다음, 한번에 하나씩 수차례에 걸쳐 조금씩 코드를 변경했다. 코드를 변경할 때마다 **테스트를 수행해 원래 프로그램과 동일하게 동작하는지 확인**했다.
+
 # 변경하기 쉬운 클래스 
+
+깨끗한 시스템은 클래스를 체계적으로 정리해 변경에 수반하는 위험을 낮춘다. 즉 SideEffect 없이 변경하기 쉬운 클래스다. 
 
 > 목록 10-9 변경이 필요해 '손대야' 히는 클래스 
 ```java
@@ -279,6 +369,13 @@ public class Sql {
     private String placeholderList(Column[] columns)
 }
 ```
+=> 아직 미완성이라 update 문과 같은 일부 SQL 기능을 지원하지 않는다. **update 문을 지원할 시점이 오면 클래스에 '손대어' 고쳐야 한다.** 문제는 코드에 손대면 위험이 생긴다는 것이다. 다른 코드를 망가뜨릴 잠정적인 위험이 존재하고 그래서 테스트도 완전히 다시 해야 한다.
+
+* 새로운 SQL 문을 지원하려면 반드시 Sql 클래스에 손대야 한다. 
+* 또한 기존 SQL 문 하나를 수정할 때도 반드시 Sql 클래스에 손대야 한다. 
+<br>=> 이렇게 변경할 이유가 두 가지이므로 Sql 클래스는 SRP를 위반한다. 
+
+단순히 구조적인 관점에서도 Sql은 SRP를 위반한다. 메서드를 쭉 훑어보면 selectWithCriteria라는 비공개 메서드가 있는데, 이 메서드는 select문을 처리할때만 사용한다. 
 
 > 목록 10-10 닫힌 클래스 집합 
 ```java
@@ -334,6 +431,10 @@ public class ColumnList {
     public String generate()
 }
 ```
+
+각 클래스는 극도로 단순하다. **코드는 순식간에 이해된다.** 함수 하나를 수정했다고 다른 함수가 망가질 위험도 사실상 사라졌다. 테스트 관점에서 모든 논리를 구석구석 증명하기도 쉬워졌다. **클래스가 서로 분리되었기 때문이다.** update 문을 추가할 때 기존 클래스를 수정할 필요없이 Sql 클래스에서 새 클래스 UpdateSql을 상속받아 거기에 넣으면 된다. SRP 도 준수하고 있고 OCP도 제공한다
+
+* 이상적인 시스템이라면 새 기능을 추가할 때 **시스템을 확장할 뿐 기존 코드를 변경하지는 않는다.**
 
 ## 변경으로부터 격리 
 
