@@ -438,11 +438,29 @@ public class ColumnList {
 
 ## 변경으로부터 격리 
 
+OOP에는 구체적인(`concrete`) 클래스와 인터페이스 타입(스위프트의 프로토콜 타입)이 있다. 
+
+ * 구체적인 클래스는 상세한 구현(코드)을 포함한다.
+ * 반면에 추상 클래스(및 인터페이스 타입)은 개념만 포함한다.  
+
+**요구사항은 변하기 마련이다. 따라서 코드도 변하기 마련이다.**
+근데 상세한 구현에 의존하는 클래스는 구현(코드)이 바뀌면 위험에 빠진다. 
+그래서 인터페이스와 추상 클래스를 사용해 구현이 미치는 상황을 격리한다. 인터페이스의 함수가 바뀌지 않는 한 요구사항이 바뀌어도 구현이 격리되었기 때문에 위험에 빠지지 않는다. 
+
+### 인터페이스 타입은 테스트에 유용하다. Test Double!
+
+상세한 구현에 의존하는 코드는 테스트하기 어렵다. 
+예를 들어 `Portfolio` 라는 객체가 있고 해당 클래스가 5분마다 값이 달라지는 `TokyoStockExchange` API를 사용한다고 했을 때, 해당 API를 이용하는 `Portfolio` 코드를 테스트하기란 쉽지 않다.
+
+따라서 아래 코드처럼 인터페이스 타입을 이용해보자.
 ```java
-public class StockExchange {
-    Money currentPrice(String symbol)
+public interface StockExchange {
+    Money currentPrice(String symbol);
 }
 ```
+=> 테스트 할때 5분마다 값이 달라지는 API를 대신하는 가짜 객체를 생성하기 위해 `StockExchange` 라는 인터페이스를 생성하고 메서드를 추가한다.
+
+다음으로 `StockExchange` 인터페이스를 구현하는 `TokyoStockExchange` 클래스를 구현한다. 또 Portfolio 생성자를 수정해 `StockExchange` 참조자를 인수로 받는다. 
 
 ```java
 public class Portfolio {
@@ -455,6 +473,8 @@ public class Portfolio {
     // ...
 }
 ```
+
+이제 `TokyoStockExchange` 클래스를 흉내내는 테스트용 클래스(Test Double)를 만들 수 있다. 테스트용 클래스는 StockExchange 인터페이스를 구현하며 **고정된 주가를 반환한다.** 
 
 ```java
 public class PortfolioTest {
@@ -475,3 +495,10 @@ public class PortfolioTest {
     }
 }
 ```
+=> 테스트에서 마이크로소프트 주식을 다섯 주를 구입한다면 테스트용 클래스는 언제나 100불을 반환한다. 우리 테스트용 클래스는 단순히 미리 정해놓은 표 값(`exchange.fix("MSFT", 100)`)만 참조한다. 그러므로 우리는 **전체 포트폴리오 총계가 500불인지 확인하는 테스트 코드(`GivenFiveMSFTTotalShouldBe500`)를 작성할 수 있다.** 
+
+* 위와 같은 테스트가 가능할 정도로 시스템의 결합도를 낮추면 **유연성과 재사용성도 더욱 높아진다.** 시스템 요소가 서로 잘 격리되어 있으면 각 요소를 이해하기도 더 쉬워진다.
+
+### DIP: 의존성 역전 원칙
+
+이렇게 결합도를 최소로 줄이면 자연스럽게 또 다른 클래스 원칙인 DIP(`Dependency Inversion Principle`) 를 따르는 클래스가 나온다. 본질적으로 **DIP는 클래스가 상세한 구현이 아니라 추상화에 의존해야 한다는 원칙**이다. 
