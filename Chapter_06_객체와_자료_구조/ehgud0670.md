@@ -58,7 +58,44 @@ public interface Vehicle {
 * 절차적인 코드는 새로운 자료 구조를 추가하기 어렵다. 그러러면 모든 함수를 고쳐야 한다. 객체 지향 코드는 새로운 함수를 추가하기 어렵다. 그러려면 모든 클래스를 고쳐야 한다. 
 
 * 인상 깊은 한마디: 분별 있는 프로그래머는 모든 것이 객체라는 생각이 미신임을 잘 안다. **때로는 단순한 자료 구조와 절차적인 코드가 가장 적합한 상황도 있다.**
-  * 절차적인 코드가 더 적합한 경우를 보기 좋은 [강의](https://www.youtube.com/watch?v=dJ5C4qRqAgA)입니다(우아한 객체지향 by 조영호님).
+
+> 절차지향이 객체지향보다 더 적합한 경우가 있다. (by [우아한 객체지향 강의 - 조영호](https://www.youtube.com/watch?v=dJ5C4qRqAgA))
+
+* 절차지향은 로직을 한눈에 보인다는 장점이 있다(ex. `Validator`).
+
+<img width="800" alt="우아한_객체지향" src="https://user-images.githubusercontent.com/38216027/126743543-d8327731-3b31-4137-9807-3c5d5f6a6866.png">
+
+### 함수형 프로그래밍
+
+* 내부 변수가 자료구조 타입인 경우(ex. Array, Dictionary, Set...) 내부 변수는 private 으로 은닉화하고 클로저를 이용해 내부 변수에 접근하기
+  * 함수형을 사용하므로 Side Effect 가 일어나면 안됩니다. 따라서 클로저로 해당 요소(element)의 index 값도 같이 보냅니다. 
+
+> Participant.swift 
+
+```swift
+class Participant {   
+    private var cards = [Card]()
+
+    func searchCard(handler: (Int, Card) -> Void) {
+        for (cardIndex, card) in self.cards.enumerated() {
+            handler(cardIndex, card)
+        }
+    }
+}    
+```
+
+> 사용하는 쪽 코드 
+
+```swift 
+participant.searchCard { cardIndex, card in
+    if card.suit == .club {
+        print(cardIndex, card)
+    }
+}
+```
+
+> Note: 클로저로 받은 Card 객체의 내부값을 변경 못하도록 Card 객체를 불변객체로 만듭니다
+
 
 ## 디미터 법칙 
 
