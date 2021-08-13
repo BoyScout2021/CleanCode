@@ -2,7 +2,7 @@
 
 ## 테스트는 유연성, 유지보수성, 재사용성을 제공한다.
 
-코드에 유연성, 유지보수성, 재사용성을 제공하는 버팀목이 바로 **단위 테스트**다. 이유는 간단한다. 테스트 케이스가 있으면 변경이 두렵지 않기 때문이다. 변경을 하는 중에 틀린 부분이 있으면 단위 테스트가 해당 로직은 틀렸다고 매번 알려주기 때문이다. 마치 QA가 여러 기능을 검증하는 것처럼 테스트 코드가 틀렸다고 **계속 피드백을 주니깐** 너무 믿음직하고, 두려운 마음이 사라지기 때문이다.
+코드에 유연성, 유지보수성, 재사용성을 제공하는 버팀목이 바로 **단위 테스트**다. 이유는 간단한다. 테스트 케이스가 있으면 변경이 두렵지 않기 때문이다. 변경을 하는 중에 틀린 부분이 있으면 단위 테스트가 해당 로직은 틀렸다고 매번 알려주기 때문이다. 마치 QA가 여러 기능을 검증하는 것처럼 테스트 코드가 틀렸다고 **계속 피드백을 주니깐**  믿음직하고, 두려운 마음이 사라지기 때문이다.
 
 ## 깨끗한 테스트 코드 
 
@@ -90,7 +90,7 @@ public void testGetPageHierarchyAsXml() throws Exception {
 }
 
 public void testGetPageHierarchyAsXmlDoesntContainSymbolicLinks() throws Exception {
-    WikiPage pageOne = makePage("PageOne");
+    WikiPage page = makePage("PageOne");
     makePages("PageOne.ChildOne", "PageTwo");
 
     addLinkTo(page, "PageTwo", "SymPage");
